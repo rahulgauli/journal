@@ -62,11 +62,11 @@ jobs:
             frontend/ \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/
 
-      - name: Install production dependencies on server
+      - name: Install build tools & production dependencies on server
         run: |
           ssh -i ~/.ssh/deploy_key \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            "cd ${{ secrets.DEPLOY_PATH }} && npm ci --omit=dev"
+            "sudo apt-get install -y build-essential python3 && cd ${{ secrets.DEPLOY_PATH }} && npm ci --omit=dev"
 
       - name: Write .env on server
         run: |
