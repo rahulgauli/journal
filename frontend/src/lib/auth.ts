@@ -3,7 +3,7 @@ import Database from "better-sqlite3";
 import path from "node:path";
 
 export const auth = betterAuth({
-  database: new Database(path.resolve(process.cwd(), "app.db")),
+  database: new Database(path.resolve(process.env.DB_PATH ?? path.join(process.cwd(), "app.db"))),
   emailAndPassword: {
     enabled: true,
   },
