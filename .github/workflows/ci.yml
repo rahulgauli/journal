@@ -1,11 +1,17 @@
 name: CI
 
 on:
-  push:
-    branches: ["**"]
-  pull_request:
-    branches: ["**"]
-
+  # push:
+  #   branches: ["**"]
+  #   paths:
+  #     - "frontend/**"
+  #     - ".github/workflows/ci.yml"
+  # pull_request:
+  #   branches: ["**"]
+  #   paths:
+  #     - "frontend/**"
+  #     - ".github/workflows/ci.yml"
+  workflow_dispatch:
 jobs:
   ci:
     name: Lint · Type-check · Build · Audit

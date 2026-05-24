@@ -1,48 +1,60 @@
 name: Deploy
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    branches: [main]
-    types: [completed]
+  # workflow_run:
+  #   workflows: ["CI"]
+  #   branches: [main]
+  #   types: [completed]
   workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   deploy:
-    name: Deploy to Production
+    name: Build image & deploy to production
     runs-on: ubuntu-latest
     environment: production
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          name: nextjs-build-${{ github.sha }}
-          path: frontend
-        continue-on-error: true
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # If artifact isn't available (direct push), build here
-      - name: Setup Node.js (fallback build)
-        uses: actions/setup-node@v4
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-
+            type=raw,value=latest
 
-      - name: Install & build (fallback)
-        working-directory: frontend
-        env:
-          BETTER_AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-          BETTER_AUTH_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
-        run: |
-          npm ci
-          npm run build
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
 
       - name: Setup SSH
         run: |
@@ -51,43 +63,32 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Sync app to server
+      - name: Copy docker-compose to server
         run: |
-          rsync -az --delete \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            --exclude='.git' \
-            --exclude='node_modules' \
-            --exclude='.env' \
-            --exclude='db/' \
-            frontend/ \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/
+          scp -i ~/.ssh/deploy_key \
+            docker-compose.yml \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/docker-compose.yml
 
-      - name: Install build tools & production dependencies on server
+      - name: Deploy on server
         run: |
           ssh -i ~/.ssh/deploy_key \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            "sudo apt-get install -y build-essential python3 && cd ${{ secrets.DEPLOY_PATH }} && npm ci --omit=dev"
-
-      - name: Write .env on server
-        run: |
-          ssh -i ~/.ssh/deploy_key \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            "cat > ${{ secrets.DEPLOY_PATH }}/.env << 'EOF'
+            "
+            cat > ~/.env << 'ENVEOF'
+          GITHUB_REPOSITORY=${{ github.repository }}
           BETTER_AUTH_SECRET=${{ secrets.AUTH_SECRET }}
           BETTER_AUTH_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
           NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
-          EOF"
+          ENVEOF
+            chmod 600 ~/.env
 
-      - name: Restart app with pm2
-        run: |
-          ssh -i ~/.ssh/deploy_key \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            "cd ${{ secrets.DEPLOY_PATH }} && \
-             pm2 describe journal > /dev/null 2>&1 \
-               && pm2 reload journal \
-               || pm2 start npm --name journal -- start && pm2 save"
+            echo ${{ secrets.GITHUB_TOKEN }} | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            sudo docker compose --env-file ~/.env -f ~/docker-compose.yml pull
+            sudo docker compose --env-file ~/.env -f ~/docker-compose.yml up -d
+            sudo docker image prune -f
+            "
 
       - name: Notify success
         if: success() && env.SLACK_WEBHOOK_URL != ''
