@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "npx @better-auth/cli migrate --config src/lib/auth.ts"
   },
   "dependencies": {
     "@types/better-sqlite3": "^7.6.13",

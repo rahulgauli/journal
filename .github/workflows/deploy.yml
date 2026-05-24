@@ -87,7 +87,7 @@ jobs:
             echo ${{ secrets.GITHUB_TOKEN }} | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
             sudo docker compose --env-file ~/.env -f ~/docker-compose.yml pull
             sudo docker compose --env-file ~/.env -f ~/docker-compose.yml up -d
-            sudo docker image prune -f
+            sudo docker image prune -af
             "
 
       - name: Notify success
