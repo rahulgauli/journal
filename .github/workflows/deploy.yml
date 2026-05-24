@@ -65,29 +65,35 @@ jobs:
         run: ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
       - name: Copy docker-compose to server
-        run: |
-          scp \
-            docker-compose.yml \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/docker-compose.yml
+        run: scp docker-compose.yml ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/docker-compose.yml
 
       - name: Deploy on server
+        env:
+          GITHUB_REPO: ${{ github.repository }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+          GOOGLE_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ACTOR: ${{ github.actor }}
         run: |
-          ssh \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            "
-            cat > ~/.env << 'ENVEOF'
-          GITHUB_REPOSITORY=${{ github.repository }}
-          BETTER_AUTH_SECRET=${{ secrets.AUTH_SECRET }}
-          BETTER_AUTH_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
-          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-          NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }}
-          ENVEOF
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            GITHUB_REPO="$GITHUB_REPO" \
+            AUTH_SECRET="$AUTH_SECRET" \
+            APP_URL="$APP_URL" \
+            GOOGLE_ID="$GOOGLE_ID" \
+            GOOGLE_SECRET="$GOOGLE_SECRET" \
+            GH_TOKEN="$GH_TOKEN" \
+            GH_ACTOR="$GH_ACTOR" \
+            'bash -s' << 'EOF'
+            printf 'GITHUB_REPOSITORY=%s\nBETTER_AUTH_SECRET=%s\nBETTER_AUTH_URL=%s\nGOOGLE_CLIENT_ID=%s\nGOOGLE_CLIENT_SECRET=%s\nNEXT_PUBLIC_APP_URL=%s\n' \
+              "$GITHUB_REPO" "$AUTH_SECRET" "$APP_URL" "$GOOGLE_ID" "$GOOGLE_SECRET" "$APP_URL" > ~/.env
             chmod 600 ~/.env
-
-            echo ${{ secrets.GITHUB_TOKEN }} | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "$GH_TOKEN" | sudo docker login ghcr.io -u "$GH_ACTOR" --password-stdin
             sudo docker compose --env-file ~/.env -f ~/docker-compose.yml pull
             sudo docker compose --env-file ~/.env -f ~/docker-compose.yml up -d
+            sudo docker image prune -af
+          EOF
 
       - name: Notify success
         if: success() && env.SLACK_WEBHOOK_URL != ''
