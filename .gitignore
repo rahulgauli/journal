@@ -1,3 +1,10 @@
+# Terraform
+infra/terraform.tfvars
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/*.tfstate
+infra/*.tfstate.backup
+
 # Logs
 logs
 *.log
