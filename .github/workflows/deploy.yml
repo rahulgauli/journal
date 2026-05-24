@@ -88,13 +88,6 @@ jobs:
             echo ${{ secrets.GITHUB_TOKEN }} | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
             sudo docker compose --env-file ~/.env -f ~/docker-compose.yml pull
             sudo docker compose --env-file ~/.env -f ~/docker-compose.yml up -d
-- name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts            sudo docker image prune -af
-            "
 
       - name: Notify success
         if: success() && env.SLACK_WEBHOOK_URL != ''
