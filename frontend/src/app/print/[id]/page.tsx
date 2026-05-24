@@ -17,6 +17,7 @@ export default function PrintPage() {
   }, [params.id]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load().catch(() => router.push('/login'));
   }, [load, router]);
 
