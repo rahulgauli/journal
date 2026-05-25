@@ -93,6 +93,12 @@ jobs:
               "$GITHUB_REPO" "$AUTH_SECRET" "$APP_URL" "$GOOGLE_ID" "$GOOGLE_SECRET" "$APP_URL" > ~/.env
             chmod 600 ~/.env
             echo "$GH_TOKEN" | sudo docker login ghcr.io -u "$GH_ACTOR" --password-stdin
+            # Backup DB before deploying new image
+            if sudo docker inspect journal > /dev/null 2>&1; then
+              sudo docker exec journal sqlite3 /app/db/journal.db ".backup '/tmp/journal-backup.db'" 2>/dev/null || true
+              cp /tmp/journal-backup.db ~/journal-backup-$(date +%Y%m%d-%H%M%S).db 2>/dev/null || true
+              ls -t ~/journal-backup-*.db 2>/dev/null | tail -n +6 | xargs rm -f || true
+            fi
             sudo docker compose --env-file ~/.env -f ~/docker-compose.yml pull
             sudo docker compose --env-file ~/.env -f ~/docker-compose.yml up -d
             sudo docker image prune -af

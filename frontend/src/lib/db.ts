@@ -3,8 +3,12 @@ import path from "node:path";
 
 const globalForDb = globalThis as unknown as { db: Database.Database };
 
+const dbPath = process.env.DB_PATH
+  ? path.resolve(process.env.DB_PATH)
+  : path.resolve(process.cwd(), "app.db");
+
 export const db: Database.Database =
-  globalForDb.db || new Database(path.resolve(process.cwd(), "app.db"));
+  globalForDb.db || new Database(dbPath);
 
 if (process.env.NODE_ENV !== "production") globalForDb.db = db;
 
