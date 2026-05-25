@@ -214,7 +214,7 @@ export default function WritePage() {
   const rightPage = allPages[spreadIndex * 2 + 1];
 
   return (
-    <div className="flex h-screen overflow-hidden desk" style={{ background: '#080e1a' }}>
+    <div className="flex h-screen overflow-hidden desk">
       <Sidebar
         book={book}
         activeChapterId={activeChapterId}
@@ -225,7 +225,7 @@ export default function WritePage() {
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex items-center gap-4 px-5 flex-shrink-0" style={{ background: 'rgba(8,14,26,0.95)', backdropFilter: 'blur(8px)', borderBottom: '1px solid rgba(201,180,122,0.12)', height: 42 }}>
+        <div className="flex items-center gap-4 px-5 flex-shrink-0" style={{ background: 'rgba(14,10,5,0.90)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(201,160,60,0.10)', height: 36 }}>
           <button onClick={() => router.push('/')} className="btn-nav text-sm">
             <ArrowLeft size={14} /> Library
           </button>
@@ -243,7 +243,7 @@ export default function WritePage() {
           </button>
         </div>
 
-        <div ref={spreadContainerRef} className="flex-1 overflow-auto flex items-center justify-center" style={{ padding: '40px 20px', background: '#080e1a' }}>
+        <div ref={spreadContainerRef} className="flex-1 overflow-auto flex items-center justify-center" style={{ padding: '40px 20px' }}>
           <div className="flex flex-col items-center gap-8">
             <div style={{
               transform: `scale(${scale})`,

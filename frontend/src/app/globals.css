@@ -41,12 +41,14 @@ body {
 
 /* ── Candlelit ink desk ─────────────────────────────────────────────────── */
 .desk {
-  background-color: #0e0b07;
+  background-color: #100c07;
   background-image:
-    radial-gradient(ellipse 90% 55% at 50% 0%, rgba(201,146,42,0.09) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 40% at 50% 100%, rgba(201,146,42,0.04) 0%, transparent 70%),
-    repeating-linear-gradient(92deg, transparent, transparent 60px, rgba(201,146,42,0.014) 60px, rgba(201,146,42,0.014) 61px),
-    repeating-linear-gradient(180deg, transparent, transparent 40px, rgba(201,146,42,0.009) 40px, rgba(201,146,42,0.009) 41px);
+    radial-gradient(ellipse 80% 50% at 50% 0%,   rgba(220,160,50,0.13) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 35% at 50% 100%, rgba(180,110,30,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 20% 50%,  rgba(160,90,20,0.04)  0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 80% 50%,  rgba(160,90,20,0.04)  0%, transparent 60%),
+    repeating-linear-gradient(92deg,  transparent, transparent 80px, rgba(200,140,40,0.012) 80px, rgba(200,140,40,0.012) 81px),
+    repeating-linear-gradient(180deg, transparent, transparent 60px, rgba(200,140,40,0.008) 60px, rgba(200,140,40,0.008) 61px);
 }
 
 .paper-texture { position: relative; }
@@ -61,7 +63,11 @@ body {
 }
 
 .book-outer-shadow {
-  filter: drop-shadow(0 24px 48px rgba(44,20,10,0.38)) drop-shadow(0 6px 14px rgba(44,20,10,0.22)) drop-shadow(0 1px 3px rgba(44,20,10,0.15));
+  filter:
+    drop-shadow(0 40px 80px rgba(20,10,4,0.70))
+    drop-shadow(0 16px 32px rgba(20,10,4,0.45))
+    drop-shadow(0  4px  8px rgba(20,10,4,0.30))
+    drop-shadow(0  1px  2px rgba(20,10,4,0.20));
 }
 
 .page-stack-left, .page-stack-right { position: relative; }
@@ -87,17 +93,17 @@ body {
 .page-stack-right::after  { right: -19px; background: linear-gradient(to left, #bfb69e, #c8bfa8); z-index: -2; }
 
 .spine-crease {
-  width: 20px;
+  width: 24px;
   flex-shrink: 0;
   background: linear-gradient(
     to right,
-    rgba(44,20,10,0.28) 0%,
-    rgba(44,20,10,0.10) 20%,
-    rgba(255,240,210,0.12) 40%,
-    rgba(255,248,230,0.18) 50%,
-    rgba(255,240,210,0.08) 60%,
-    rgba(44,20,10,0.10) 80%,
-    rgba(44,20,10,0.24) 100%
+    rgba(30,12,4,0.55) 0%,
+    rgba(30,12,4,0.22) 18%,
+    rgba(255,240,210,0.10) 35%,
+    rgba(255,250,235,0.22) 50%,
+    rgba(255,240,210,0.08) 65%,
+    rgba(30,12,4,0.20) 82%,
+    rgba(30,12,4,0.50) 100%
   );
 }
 
@@ -106,8 +112,22 @@ body {
 .book-textarea {
   position: absolute; inset: 0; width: 100%; height: 100%;
   background: transparent; border: none; outline: none; resize: none;
-  color: transparent; caret-color: #1a1410; padding: 0; margin: 0;
+  color: transparent; caret-color: transparent; padding: 0; margin: 0;
   overflow: hidden; z-index: 10; cursor: text;
+  white-space: pre-wrap; word-break: break-word;
+}
+
+/* When the page is active: show real ink, proper caret */
+.book-textarea--active {
+  color: #1a1410;
+  caret-color: #2c1f14;
+  /* Thin, literary caret — supported in most browsers */
+  caret-shape: bar;
+}
+
+.book-textarea--active::placeholder {
+  color: rgba(26,20,16,0.22);
+  font-style: italic;
 }
 
 .page-shadow-right { box-shadow: inset -4px 0 8px rgba(0,0,0,0.06); }

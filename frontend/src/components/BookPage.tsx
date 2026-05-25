@@ -264,8 +264,8 @@ export default function BookPage({
           </div>
         )}
 
-        {/* Rendered paragraphs */}
-        <div style={{ position: 'relative' }}>
+        {/* Rendered paragraphs — shown only when not actively typing */}
+        <div style={{ position: 'relative', visibility: isActive ? 'hidden' : 'visible' }}>
           <Paragraphs
             content={content}
             fontSizePx={metrics.fontSizePx}
@@ -276,13 +276,14 @@ export default function BookPage({
           />
         </div>
 
-        {/* Invisible textarea overlay for typing */}
+        {/* Textarea — transparent overlay when inactive, visible ink layer when active */}
         <textarea
           ref={textareaRef}
           value={content}
           onChange={(e) => onChange(e.target.value)}
           onFocus={onFocus}
-          className="book-textarea"
+          className={isActive ? 'book-textarea book-textarea--active' : 'book-textarea'}
+          placeholder="Begin writing…"
           spellCheck
           style={{
             fontSize: metrics.fontSizePx,
